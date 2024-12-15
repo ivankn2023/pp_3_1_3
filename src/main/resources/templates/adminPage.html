@@ -37,17 +37,17 @@
         <td>
 
             <form action="#" th:action="@{/admin/update(id=${user.id})}" method="get" style="display:inline;">
-                <input type="hidden" name="id" th:value="${user.id}" />
+                <input type="hidden" name="id" th:value="${user.id}"/>
                 <button type="submit" class="edit-button">Редактировать</button>
             </form>
 
             <form action="#" th:action="@{/admin/delete(id=${user.id})}" method="post" style="display:inline;">
-                <input type="hidden" name="id" th:value="${user.id}" />
+                <input type="hidden" name="id" th:value="${user.id}"/>
                 <button type="submit" class="delete-button">Удалить</button>
             </form>
 
             <form action="#" th:action="@{/admin/user_view(id=${user.id})}" method="get" style="display:inline;">
-                <input type="hidden" name="id" th:value="${user.id}" />
+                <input type="hidden" name="id" th:value="${user.id}"/>
                 <button type="submit" class="delete-button">Просмотр</button>
             </form>
         </td>
@@ -59,15 +59,15 @@
 <br><br>
 
 <form action="#" th:action="@{/admin/add}" method="post">
-    <input type="text" name="name" placeholder="Имя" required />
+    <input type="text" name="name" placeholder="Имя" required/>
     <br>
-    <input type="text" name="surname" placeholder="Фамилия" required />
+    <input type="text" name="surname" placeholder="Фамилия" required/>
     <br>
-    <input type="number" name="age" placeholder="Возраст" required />
+    <input type="number" name="age" placeholder="Возраст" required/>
     <br>
-    <input type="text" name="username" placeholder="Логин" required />
+    <input type="text" name="username" placeholder="Логин" required/>
     <br>
-    <input type="text" name="password" placeholder="Пароль" required />
+    <input type="text" name="password" placeholder="Пароль" required/>
     <br>
 
     <label for="role">Роль:</label>
@@ -77,7 +77,7 @@
     </select>
     <br>
 
-    <input type="submit" value="Добавить пользователя" />
+    <input type="submit" value="Добавить пользователя"/>
 </form>
 
 
