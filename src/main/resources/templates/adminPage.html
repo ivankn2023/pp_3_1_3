@@ -154,7 +154,7 @@
     </div>
 </div>
 
-<!-- Модальное окно для редактирования пользователя -->
+
 <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -266,25 +266,6 @@
         modal.find('#deleteUserAge').val(button.data('age'));
         modal.find('#deleteUserUsername').val(button.data('username'));
         modal.find('#deleteUserRole').val(button.data('role'));
-    });
-
-
-    $('#editUserForm').on('submit', function (event) {
-        event.preventDefault();
-        var form = $(this);
-        var formData = form.serialize();
-        $.ajax({
-            url: '/admin/update',
-            type: 'POST',
-            data: formData,
-            success: function (response) {
-                $('#editUserModal').modal('hide');
-                location.reload();
-            },
-            error: function (xhr) {
-                alert('Произошла ошибка при обновлении пользователя: ' + xhr.responseText);
-            }
-        });
     });
 
     $('.role-menu-item').on('click', function () {

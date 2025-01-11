@@ -60,14 +60,11 @@ public class UserService implements UserDetailsService {
     public void saveUser(User user, String roleName) {
         List<Role> roles = getRolesByRoleName(roleName);
 
-        // Устанавливаем роли пользователю
         user.setRoles(roles);
 
-        // Шифруем пароль
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Сохраняем пользователя
         userRepository.save(user);
     }
 
@@ -93,7 +90,6 @@ public class UserService implements UserDetailsService {
     public List<Role> getRolesByRoleName(String roleName) {
         List<Role> roles = new ArrayList<>();
 
-        // Проверяем, какая роль передана и добавляем соответствующие роли
         if ("ROLE_ADMIN".equals(roleName)) {
             Role adminRole = roleRepository.findByName("ROLE_ADMIN");
             Role userRole = roleRepository.findByName("ROLE_USER");
@@ -124,15 +120,14 @@ public class UserService implements UserDetailsService {
             existingUser.setName(updatedUser.getName());
             existingUser.setSurname(updatedUser.getSurname());
             existingUser.setAge(updatedUser.getAge());
-            existingUser.setUsername(updatedUser.getUsername()); // Устанавливаем новое имя пользователя
+            existingUser.setUsername(updatedUser.getUsername());
 
-            // Если пароль не пустой, шифруем и устанавливаем его
+
             if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
                 PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
                 existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
             }
 
-            // Также обновляем роли
             List<Role> roles = getRolesByRoleName(roleName);
             existingUser.setRoles(roles);
 

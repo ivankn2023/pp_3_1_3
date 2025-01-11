@@ -32,12 +32,12 @@ public class AdminController {
         List<User> allUsers = userService.getAllUsers();
         model.addAttribute("users", allUsers);
 
-        // Получаем текущего пользователя
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User loggedInUser = userService.findByUsername(authentication.getName());
         model.addAttribute("loggedInUser", loggedInUser);
 
-        return "adminPage"; // Возвращаем страницу админа
+        return "adminPage";
     }
 
     @PostMapping("/add")
@@ -81,12 +81,12 @@ public class AdminController {
 
     @GetMapping("/switchRole")
     public String switchRole(@RequestParam("role") String role) {
-        // Перенаправляем на соответствующую страницу в зависимости от выбора роли
+
         if ("ROLE_ADMIN".equals(role)) {
-            return "redirect:/adminPage"; // перенаправляет на админскую страницу
+            return "redirect:/adminPage";
         } else if ("ROLE_USER".equals(role)) {
-            return "redirect:/user"; // перенаправляет на страницу пользователя
+            return "redirect:/user";
         }
-        return "redirect:/admin"; // по умолчанию
+        return "redirect:/admin";
     }
 }

@@ -25,18 +25,17 @@ public class UserController {
     public String getUserPage(Model model, Principal principal) {
         User loggedInUser = userService.findByUsername(principal.getName());
         model.addAttribute("loggedInUser", loggedInUser);
-        return "user"; // Это ваша страница для пользователей
+        return "user"; 
     }
 
     @GetMapping("/switchRole")
     public String switchRole(@RequestParam("role") String role, Principal principal) {
-        // Можно добавить логику для проверки роли и перенаправления к нужной странице.
 
         if (role.equals("ROLE_ADMIN")) {
-            return "redirect:/admin"; // Перенаправление на страницу администратора
+            return "redirect:/admin";
         } else if (role.equals("ROLE_USER")) {
-            return "redirect:/user"; // Перенаправление на страницу пользователя
+            return "redirect:/user";
         }
-        return "redirect:/user"; // По умолчанию возвращаем на страницу пользователя
+        return "redirect:/user";
     }
 }
