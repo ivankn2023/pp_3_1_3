@@ -11,7 +11,7 @@
             height: 100%;
             width: 200px;
             position: fixed;
-            top: 60px; /* Учитываем высоту верхней панели */
+            top: 60px;
             left: 0;
             background-color: #f8f9fa;
             padding: 15px;
@@ -30,26 +30,26 @@
         }
 
         .top-bar {
-            height: 50px; /* Уменьшаем высоту верхней панели */
+            height: 50px;
             background-color: #343a40;
             color: white;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            z-index: 1000; /* Убедитесь, что панель на переднем плане */
+            z-index: 1000;
             display: flex;
-            justify-content: space-between; /* Распределяем элементы по краям */
-            align-items: center; /* Центруем вертикально */
-            padding: 0 15px; /* Добавляем немного отступов */
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
         }
 
         .top-bar span {
-            font-size: 1.1rem; /* Увеличиваем шрифт внутри верхней панели */
+            font-size: 1.1rem;
         }
 
         .content {
-            margin-top: 120px; /* Увеличиваем отступ сверху для правильного расположения содержимого */
+            margin-top: 120px;
         }
     </style>
 </head>
@@ -115,9 +115,8 @@
                     <td>
                         <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editUserModal"
                                 th:attr="data-id=${user.id}, data-name=${user.name}, data-surname=${user.surname}, data-age=${user.age}, data-username=${user.username}, data-role=${user.roles[0]?.name}">Редактировать</button>
-                        <form th:action="@{/admin/delete(id=${user.id})}" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
-                        </form>
+                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteUserModal"
+                                th:attr="data-id=${user.id}, data-name=${user.name}, data-surname=${user.surname}, data-age=${user.age}, data-username=${user.username}, data-role=${user.roles[0]?.name}">Удалить</button>
                     </td>
                 </tr>
                 </tbody>
@@ -186,7 +185,7 @@
                     </div>
                     <div class="form-group">
                         <label for="editUserPassword">Пароль:</label>
-                        <input type="password" class="form-control" id="editUserPassword" name="password" placeholder="Если не хотите менять, оставьте пустым"/>
+                        <input type="password" class="form-control" id="editUserPassword" name="password"/>
                     </div>
                     <div class="form-group">
                         <label for="editUserRole">Роль:</label>
@@ -202,8 +201,51 @@
     </div>
 </div>
 
+
+<!-- Модальное окно для удаления пользователя -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteUserModalLabel">Подтверждение удаления пользователя</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="deleteUserForm" method="post" th:action="@{/admin/delete}">
+                    <input type="hidden" id="deleteUserId" name="id"/>
+                    <div class="form-group">
+                        <label for="deleteUserName">Имя:</label>
+                        <input type="text" class="form-control" id="deleteUserName" name="name" readonly/>
+                    </div>
+                    <div class="form-group">
+                        <label for="deleteUserSurname">Фамилия:</label>
+                        <input type="text" class="form-control" id="deleteUserSurname" name="surname" readonly/>
+                    </div>
+                    <div class="form-group">
+                        <label for="deleteUserAge">Возраст:</label>
+                        <input type="number" class="form-control" id="deleteUserAge" name="age" readonly/>
+                    </div>
+                    <div class="form-group">
+                        <label for="deleteUserUsername">Логин:</label>
+                        <input type="text" class="form-control" id="deleteUserUsername" name="username" readonly/>
+                    </div>
+                    <div class="form-group">
+                        <label for="deleteUserRole">Роль:</label>
+                        <input type="text" class="form-control" id="deleteUserRole" name="role" readonly/>
+                    </div>
+                    <p>Вы уверены, что хотите удалить этого пользователя?</p>
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script>
-    // Добавляем обработчик события для открытия модального окна редактирования
     $('#editUserModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var modal = $(this);
@@ -215,18 +257,29 @@
         modal.find('#editUserRole').val(button.data('role'));
     });
 
-    // Обработка формы редактирования пользователя
+    $('#deleteUserModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var modal = $(this);
+        modal.find('#deleteUserId').val(button.data('id'));
+        modal.find('#deleteUserName').val(button.data('name'));
+        modal.find('#deleteUserSurname').val(button.data('surname'));
+        modal.find('#deleteUserAge').val(button.data('age'));
+        modal.find('#deleteUserUsername').val(button.data('username'));
+        modal.find('#deleteUserRole').val(button.data('role'));
+    });
+
+
     $('#editUserForm').on('submit', function (event) {
-        event.preventDefault(); // Отменяем стандартное поведение
+        event.preventDefault();
         var form = $(this);
-        var formData = form.serialize(); // Извлекаем данные из формы
+        var formData = form.serialize();
         $.ajax({
             url: '/admin/update',
             type: 'POST',
             data: formData,
             success: function (response) {
                 $('#editUserModal').modal('hide');
-                location.reload(); // Обновляем страницу
+                location.reload();
             },
             error: function (xhr) {
                 alert('Произошла ошибка при обновлении пользователя: ' + xhr.responseText);
@@ -234,11 +287,9 @@
         });
     });
 
-    // Обработка кликов по элементам меню ролей
     $('.role-menu-item').on('click', function () {
         $('.role-menu-item').removeClass('active');
         $(this).addClass('active');
-        // Здесь можно реализовать дополнительную логику для фильтрации пользователей по ролям
     });
 </script>
 
