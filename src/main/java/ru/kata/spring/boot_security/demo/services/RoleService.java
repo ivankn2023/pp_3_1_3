@@ -19,4 +19,8 @@ public class RoleService {
     public List<Role> getRoles() {
         return rolesRepository.findAll();
     }
+
+    public List<Role> getRolesByIds(List<Long> ids) {
+        return rolesRepository.findAllById(ids);
+    }
 }

@@ -16,10 +16,8 @@ import ru.kata.spring.boot_security.demo.repositories.RoleRepository;
 import ru.kata.spring.boot_security.demo.repositories.UserRepository;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import javax.persistence.criteria.CriteriaBuilder;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,14 +38,18 @@ public class UserService implements UserDetailsService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        String sql = "select u from User u left join fetch u.roles where u.name=:name";
-
-        User user = findByUsername(username);
+        User user = userRepository.findByUsername(username);
         if (user == null) {
             throw new UsernameNotFoundException(String.format("User %s not found", username));
         }
-        return user;
+        // Здесь вы можете явно установить роли, если это необходимо
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                mapRolesToAuthorities(user.getRoles())
+        );
     }
+
 
     private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> roles) {
         return roles.stream().map(r -> new SimpleGrantedAuthority(r.getName())).collect(Collectors.toList());
@@ -55,12 +57,20 @@ public class UserService implements UserDetailsService {
 
 
     @Transactional
-    public void saveUser(User user) {
-        user.setRoles(Collections.singletonList(roleRepository.getById(1L)));
+    public void saveUser(User user, String roleName) {
+        List<Role> roles = getRolesByRoleName(roleName);
+
+        // Устанавливаем роли пользователю
+        user.setRoles(roles);
+
+        // Шифруем пароль
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // Сохраняем пользователя
         userRepository.save(user);
     }
+
 
 
     @Transactional(readOnly = true)
@@ -77,6 +87,58 @@ public class UserService implements UserDetailsService {
     public void deleteUser(long id) {
         if (getUser(id).isPresent()) {
             userRepository.deleteById(id);
+        }
+    }
+
+    public List<Role> getRolesByRoleName(String roleName) {
+        List<Role> roles = new ArrayList<>();
+
+        // Проверяем, какая роль передана и добавляем соответствующие роли
+        if ("ROLE_ADMIN".equals(roleName)) {
+            Role adminRole = roleRepository.findByName("ROLE_ADMIN");
+            Role userRole = roleRepository.findByName("ROLE_USER");
+
+            if (adminRole != null) {
+                roles.add(adminRole);
+            }
+            if (userRole != null) {
+                roles.add(userRole);
+            }
+        } else if ("ROLE_USER".equals(roleName)) {
+            Role userRole = roleRepository.findByName("ROLE_USER");
+
+            if (userRole != null) {
+                roles.add(userRole);
+            }
+        }
+        return roles;
+    }
+
+    @Transactional
+    public void updateUser(User updatedUser, String roleName) {
+        Optional<User> optionalUser = userRepository.findById(updatedUser.getId());
+
+        if (optionalUser.isPresent()) {
+            User existingUser = optionalUser.get();
+
+            existingUser.setName(updatedUser.getName());
+            existingUser.setSurname(updatedUser.getSurname());
+            existingUser.setAge(updatedUser.getAge());
+            existingUser.setUsername(updatedUser.getUsername()); // Устанавливаем новое имя пользователя
+
+            // Если пароль не пустой, шифруем и устанавливаем его
+            if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+                PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+                existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+            }
+
+            // Также обновляем роли
+            List<Role> roles = getRolesByRoleName(roleName);
+            existingUser.setRoles(roles);
+
+            userRepository.save(existingUser);
+        } else {
+            throw new UsernameNotFoundException("User not found");
         }
     }
 }

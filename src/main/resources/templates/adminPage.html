@@ -2,84 +2,245 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Список пользователей</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        .sidebar {
+            height: 100%;
+            width: 200px;
+            position: fixed;
+            top: 60px; /* Учитываем высоту верхней панели */
+            left: 0;
+            background-color: #f8f9fa;
+            padding: 15px;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 10px;
+            color: black;
+            text-decoration: none;
+        }
+
+        .sidebar a.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .top-bar {
+            height: 50px; /* Уменьшаем высоту верхней панели */
+            background-color: #343a40;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000; /* Убедитесь, что панель на переднем плане */
+            display: flex;
+            justify-content: space-between; /* Распределяем элементы по краям */
+            align-items: center; /* Центруем вертикально */
+            padding: 0 15px; /* Добавляем немного отступов */
+        }
+
+        .top-bar span {
+            font-size: 1.1rem; /* Увеличиваем шрифт внутри верхней панели */
+        }
+
+        .content {
+            margin-top: 120px; /* Увеличиваем отступ сверху для правильного расположения содержимого */
+        }
+    </style>
 </head>
 <body>
-<h2>Список пользователей</h2>
-<form th:action="@{/logout}" th:method="POST">
-    <input type="submit" th:value="Logout"/>
-</form>
 
-<table border="1">
-    <thead>
-    <tr>
-        <th>№</th>
-        <th>Имя</th>
-        <th>Фамилия</th>
-        <th>Возраст</th>
-        <th>Логин</th>
-        <th>Роль</th>
-        <th>Действия</th>
+<div class="top-bar">
+    <div>
+        <span th:text="'Логин: ' + ${loggedInUser.username}"></span>
+        <span th:text="' Роль: '"/>
+        <span th:each="role : ${loggedInUser.roles}" th:text="' ' + ${role.name}"></span>
+    </div>
+    <form th:action="@{/logout}" th:method="POST" style="display:inline;">
+        <input type="submit" class="btn btn-danger btn-sm" th:value="Logout"/>
+    </form>
+</div>
 
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="user, iterStat : ${users}">
-        <td th:text="${iterStat.index + 1}"></td>
-        <td th:text="${user.name}"></td>
-        <td th:text="${user.surname}"></td>
-        <td th:text="${user.age}"></td>
-        <td th:text="${user.username}"></td>
-        <td>
-            <ul>
-                <li th:each="role : ${user.roles}" th:text="${role.name}"></li>
-            </ul>
-        </td>
-        <td>
+<div class="sidebar">
+    <h5>Меню</h5>
+    <div th:each="role : ${loggedInUser.roles}">
+        <a th:href="@{/user(switchRole=${role.name})}" th:text="${role.name}"
+           th:class="${role.name == 'ROLE_ADMIN' ? 'active' : ''}"></a>
+    </div>
+</div>
 
-            <form action="#" th:action="@{/admin/update(id=${user.id})}" method="get" style="display:inline;">
-                <input type="hidden" name="id" th:value="${user.id}"/>
-                <button type="submit" class="edit-button">Редактировать</button>
+<div class="container content">
+    <h3 class="mt-3">Панель админа</h3>
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-toggle="tab" href="#users">Пользователи</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#addUser">Добавить пользователя</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div id="users" class="tab-pane active">
+            <h3 class="mt-3">Список пользователей</h3>
+            <table class="table table-bordered mt-3">
+                <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Имя</th>
+                    <th>Фамилия</th>
+                    <th>Возраст</th>
+                    <th>Логин</th>
+                    <th>Роль</th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user, iterStat : ${users}">
+                    <td th:text="${iterStat.index + 1}"></td>
+                    <td th:text="${user.name}"></td>
+                    <td th:text="${user.surname}"></td>
+                    <td th:text="${user.age}"></td>
+                    <td th:text="${user.username}"></td>
+                    <td>
+                        <span th:each="role, iterStat : ${user.roles}">
+                            <span th:text="${role.name}"></span><span th:if="${!iterStat.last}">, </span>
+                        </span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editUserModal"
+                                th:attr="data-id=${user.id}, data-name=${user.name}, data-surname=${user.surname}, data-age=${user.age}, data-username=${user.username}, data-role=${user.roles[0]?.name}">Редактировать</button>
+                        <form th:action="@{/admin/delete(id=${user.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="addUser" class="tab-pane fade">
+            <h3 class="mt-3">Добавить пользователя</h3>
+            <form th:action="@{/admin/add}" method="post">
+                <div class="form-group">
+                    <input type="text" class="form-control" name="name" placeholder="Имя" required/>
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" name="surname" placeholder="Фамилия" required/>
+                </div>
+                <div class="form-group">
+                    <input type="number" class="form-control" name="age" placeholder="Возраст" required/>
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" name="username" placeholder="Логин" required/>
+                </div>
+                <div class="form-group">
+                    <input type="password" class="form-control" name="password" placeholder="Пароль" required/>
+                </div>
+                <div class="form-group">
+                    <label for="role">Роль:</label>
+                    <select class="form-control" name="role" id="role" required>
+                        <option value="ROLE_ADMIN">ADMIN</option>
+                        <option value="ROLE_USER">USER</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Добавить пользователя</button>
             </form>
+        </div>
+    </div>
+</div>
 
-            <form action="#" th:action="@{/admin/delete(id=${user.id})}" method="post" style="display:inline;">
-                <input type="hidden" name="id" th:value="${user.id}"/>
-                <button type="submit" class="delete-button">Удалить</button>
-            </form>
+<!-- Модальное окно для редактирования пользователя -->
+<div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">Редактировать пользователя</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm" method="post" th:action="@{/admin/update}">
+                    <input type="hidden" id="editUserId" name="id"/>
+                    <div class="form-group">
+                        <label for="editUserName">Имя:</label>
+                        <input type="text" class="form-control" id="editUserName" name="name" required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="editUserSurname">Фамилия:</label>
+                        <input type="text" class="form-control" id="editUserSurname" name="surname" required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="editUserAge">Возраст:</label>
+                        <input type="number" class="form-control" id="editUserAge" name="age" required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="editUserUsername">Логин:</label>
+                        <input type="text" class="form-control" id="editUserUsername" name="username" required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="editUserPassword">Пароль:</label>
+                        <input type="password" class="form-control" id="editUserPassword" name="password" placeholder="Если не хотите менять, оставьте пустым"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="editUserRole">Роль:</label>
+                        <select class="form-control" id="editUserRole" name="role">
+                            <option value="ROLE_ADMIN">ADMIN</option>
+                            <option value="ROLE_USER">USER</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-            <form action="#" th:action="@{/admin/user_view(id=${user.id})}" method="get" style="display:inline;">
-                <input type="hidden" name="id" th:value="${user.id}"/>
-                <button type="submit" class="delete-button">Просмотр</button>
-            </form>
-        </td>
+<script>
+    // Добавляем обработчик события для открытия модального окна редактирования
+    $('#editUserModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var modal = $(this);
+        modal.find('#editUserId').val(button.data('id'));
+        modal.find('#editUserName').val(button.data('name'));
+        modal.find('#editUserSurname').val(button.data('surname'));
+        modal.find('#editUserAge').val(button.data('age'));
+        modal.find('#editUserUsername').val(button.data('username'));
+        modal.find('#editUserRole').val(button.data('role'));
+    });
 
-    </tr>
-    </tbody>
-</table>
+    // Обработка формы редактирования пользователя
+    $('#editUserForm').on('submit', function (event) {
+        event.preventDefault(); // Отменяем стандартное поведение
+        var form = $(this);
+        var formData = form.serialize(); // Извлекаем данные из формы
+        $.ajax({
+            url: '/admin/update',
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                $('#editUserModal').modal('hide');
+                location.reload(); // Обновляем страницу
+            },
+            error: function (xhr) {
+                alert('Произошла ошибка при обновлении пользователя: ' + xhr.responseText);
+            }
+        });
+    });
 
-<br><br>
-
-<form action="#" th:action="@{/admin/add}" method="post">
-    <input type="text" name="name" placeholder="Имя" required/>
-    <br>
-    <input type="text" name="surname" placeholder="Фамилия" required/>
-    <br>
-    <input type="number" name="age" placeholder="Возраст" required/>
-    <br>
-    <input type="text" name="username" placeholder="Логин" required/>
-    <br>
-    <input type="text" name="password" placeholder="Пароль" required/>
-    <br>
-
-    <label for="role">Роль:</label>
-    <select name="role" id="role" required>
-        <option value="ROLE_ADMIN">ADMIN</option>
-        <option value="ROLE_USER">USER</option>
-    </select>
-    <br>
-
-    <input type="submit" value="Добавить пользователя"/>
-</form>
-
+    // Обработка кликов по элементам меню ролей
+    $('.role-menu-item').on('click', function () {
+        $('.role-menu-item').removeClass('active');
+        $(this).addClass('active');
+        // Здесь можно реализовать дополнительную логику для фильтрации пользователей по ролям
+    });
+</script>
 
 </body>
 </html>

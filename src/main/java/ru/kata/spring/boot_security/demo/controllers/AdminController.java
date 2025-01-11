@@ -2,10 +2,13 @@ package ru.kata.spring.boot_security.demo.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.kata.spring.boot_security.demo.models.User;
 import ru.kata.spring.boot_security.demo.services.UserService;
 
@@ -28,47 +31,40 @@ public class AdminController {
     public String allUsers(Model model) {
         List<User> allUsers = userService.getAllUsers();
         model.addAttribute("users", allUsers);
-        return "adminPage";
+
+        // Получаем текущего пользователя
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User loggedInUser = userService.findByUsername(authentication.getName());
+        model.addAttribute("loggedInUser", loggedInUser);
+
+        return "adminPage"; // Возвращаем страницу админа
     }
 
     @PostMapping("/add")
-    public String addUser(@ModelAttribute User user) {
-        userService.saveUser(user);
-        return "redirect:/adminPage";
-    }
-
-    @PostMapping("/save")
-    public String saveUser(@ModelAttribute("user") User user, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            return "adminPage";
-        }
-        userService.saveUser(user);
-        return "redirect:/adminPage";
-    }
-
-
-    @GetMapping("/update")
-    public String updateUser(@RequestParam("id") long id, Model model) {
-        Optional<User> optionalUser = userService.getUser(id);
-        if (optionalUser.isPresent()) {
-            model.addAttribute("user", optionalUser.get()); // Извлекаем User из Optional
-            return "editUserForm"; // Убедитесь, что это правильное имя шаблона
-        } else {
-            throw new UsernameNotFoundException(String.format("Username with id = %s not found", id));
-        }
+    public String addUser(@ModelAttribute User user, @RequestParam String role) {
+        userService.saveUser(user, role);
+        return "redirect:/admin";
     }
 
     @PostMapping("/update")
-    public String saveUser(@ModelAttribute User user) {
-        userService.saveUser(user); // Предполагается, что у вас есть метод для обновления
-        return "redirect:/admin"; // Перенаправление после обновления
+    public String updateUser(@ModelAttribute User user,
+                             @RequestParam("role") String role,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            System.out.println("Обновление пользователя: " + user);
+            userService.updateUser(user, role);
+            return "redirect:/admin";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Ошибка при обновлении пользователя: " + e.getMessage());
+            return "redirect:/admin";
+        }
     }
-
-
 
     @PostMapping("/delete")
     public String deleteUser(@RequestParam("id") long id) {
+        System.out.println("idididi");
         userService.deleteUser(id);
+        System.out.println("idididi2");
         return "redirect:/admin";
     }
 
@@ -81,6 +77,16 @@ public class AdminController {
         } else {
             throw new UsernameNotFoundException(String.format("Username with id = %s not found", id));
         }
+    }
 
+    @GetMapping("/switchRole")
+    public String switchRole(@RequestParam("role") String role) {
+        // Перенаправляем на соответствующую страницу в зависимости от выбора роли
+        if ("ROLE_ADMIN".equals(role)) {
+            return "redirect:/adminPage"; // перенаправляет на админскую страницу
+        } else if ("ROLE_USER".equals(role)) {
+            return "redirect:/user"; // перенаправляет на страницу пользователя
+        }
+        return "redirect:/admin"; // по умолчанию
     }
 }

@@ -39,7 +39,9 @@ public class UsersInit {
 //
 
         user1.setRoles(new HashSet<>(Set.of(role2)));
-        user2.setRoles(new HashSet<>(Set.of(role1)));
+
+        user2.setRoles(new HashSet<>(Set.of(role1, role2)));
+
 
         userRepository.save(user1);
         userRepository.save(user2);
